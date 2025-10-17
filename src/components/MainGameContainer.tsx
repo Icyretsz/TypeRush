@@ -418,11 +418,29 @@ const MainGameContainer = ({
 									}
 									if (e.key === 'Backspace') {
 										if (typed.length > 0) {
-											if (caretIdx === typed.length - 1) {
+											const newLength = typed.length - 1
+
+											if (caretIdx === newLength) {
 												setCaretIdx(prev => Math.max(-1, prev - 1))
 											}
+
+											// delete extended characters if typed length is greater than the original word length
+
+											if (newLength >= words[currentWordIdx].length) {
+												const newWord = localWords[currentWordIdx].slice(
+													0,
+													newLength
+												)
+												setLocalWords(prev => {
+													const newLocalWords = [...prev]
+													newLocalWords[currentWordIdx] = newWord
+													return newLocalWords
+												})
+												setCurrentWord(newWord)
+											}
+
+											return
 										}
-										return
 									}
 									if (!startTime) {
 										setStartTime(Date.now())
