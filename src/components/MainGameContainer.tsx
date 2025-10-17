@@ -4,7 +4,13 @@ import { useGameStore } from '../stores/useGameStore.ts'
 import Caret from './Caret.tsx'
 import { gsap } from 'gsap'
 import { Flip } from 'gsap/Flip'
-import type { MainGameContainerProps } from '../common/types.ts'
+import {
+	InputKey,
+	CharacterState,
+	PlayerColor,
+	TypingMode,
+	type MainGameContainerProps,
+} from '../common/types.ts'
 import { TbReload } from 'react-icons/tb'
 gsap.registerPlugin(Flip)
 
@@ -42,8 +48,13 @@ const MainGameContainer = ({
 	const [timeElapsed, setTimeElapsed] = useState<number>(0)
 
 	const getPlayerColor = (playerIndex: number) => {
-		const colors = ['#ef4444', '#22c55e', '#f59e0b', '#3b82f6']
-		return colors[playerIndex] || '#6b7280'
+		const colors = [
+			PlayerColor.RED,
+			PlayerColor.GREEN,
+			PlayerColor.AMBER,
+			PlayerColor.BLUE,
+		]
+		return colors[playerIndex] || PlayerColor.GRAY
 	}
 
 	const calculateStats = useCallback(() => {
@@ -52,8 +63,8 @@ const MainGameContainer = ({
 
 		Object.values(wordResults).forEach(results => {
 			results.forEach(r => {
-				if (r === 'correct') correct++
-				if (r === 'incorrect') incorrect++
+				if (r === CharacterState.CORRECT) correct++
+				if (r === CharacterState.INCORRECT) incorrect++
 			})
 		})
 
@@ -72,15 +83,17 @@ const MainGameContainer = ({
 
 		const currentResults = words[currentWordIdx].split('').map((char, idx) => {
 			if (idx < typed.length) {
-				return typed[idx] === char ? 'correct' : 'incorrect'
+				return typed[idx] === char
+					? CharacterState.CORRECT
+					: CharacterState.INCORRECT
 			}
-			return 'untyped'
+			return CharacterState.UNTYPED
 		})
 
 		if (typed.length > words[currentWordIdx].length) {
 			const overflowCount = typed.length - words[currentWordIdx].length
 			for (let i = 0; i < overflowCount; i++) {
-				currentResults.push('incorrect')
+				currentResults.push(CharacterState.INCORRECT)
 			}
 		}
 
@@ -398,25 +411,25 @@ const MainGameContainer = ({
 								type='text'
 								value={typed}
 								onKeyDown={e => {
-									if (e.key === ' ') {
+									if (e.key === InputKey.SPACE) {
 										e.preventDefault()
 										handleSpacePress()
 										return
 									}
 									if (
-										e.key === 'Tab' ||
-										e.key === 'Enter' ||
+										e.key === InputKey.TAB ||
+										e.key === InputKey.ENTER ||
 										[
-											'ArrowUp',
-											'ArrowDown',
-											'ArrowLeft',
-											'ArrowRight',
+											InputKey.ARROW_UP,
+											InputKey.ARROW_DOWN,
+											InputKey.ARROW_LEFT,
+											InputKey.ARROW_RIGHT,
 										].includes(e.key)
 									) {
 										e.preventDefault()
 										return
 									}
-									if (e.key === 'Backspace') {
+									if (e.key === InputKey.BACKSPACE) {
 										if (typed.length > 0) {
 											const newLength = typed.length - 1
 
@@ -447,7 +460,7 @@ const MainGameContainer = ({
 									}
 									if (
 										typed.length >= words[currentWordIdx].length &&
-										mode === 'practice'
+										mode === TypingMode.PRACTICE
 									) {
 										const newWord = localWords[currentWordIdx] + e.key
 										setLocalWords(prev => {
@@ -457,7 +470,7 @@ const MainGameContainer = ({
 										})
 										setCurrentWord(newWord)
 									}
-									if (mode === 'multiplayer') {
+									if (mode === TypingMode.MULTIPLAYER) {
 										const nextChar = localWords[currentWordIdx]?.[caretIdx + 1]
 										if (nextChar && nextChar === e.key) {
 											//allow to next char only on typed correctly
@@ -481,9 +494,9 @@ const MainGameContainer = ({
 								const storedResults = wordResults[wordIdx]
 								if (storedResults && storedResults[idx]) {
 									state =
-										storedResults[idx] === 'correct'
+										storedResults[idx] === CharacterState.CORRECT
 											? 'text-white'
-											: storedResults[idx] === 'incorrect'
+											: storedResults[idx] === CharacterState.INCORRECT
 												? 'text-red-500'
 												: ''
 								}
@@ -506,7 +519,7 @@ const MainGameContainer = ({
 					</span>
 				))}
 			</div>
-			{mode === 'practice' && (
+			{mode === TypingMode.PRACTICE && (
 				<Modal
 					open={!!results}
 					onCancel={handleReset}
@@ -528,7 +541,7 @@ const MainGameContainer = ({
 					)}
 				</Modal>
 			)}
-			{mode === 'multiplayer' && (
+			{mode === TypingMode.MULTIPLAYER && (
 				<Modal
 					open={results != null && position != null}
 					onCancel={handleReset}
@@ -551,7 +564,7 @@ const MainGameContainer = ({
 					{position !== null && <p>Position: {position + 1}</p>}
 				</Modal>
 			)}
-			{mode === 'practice' && (
+			{mode === TypingMode.PRACTICE && (
 				<TbReload
 					className='size-8 cursor-pointer mt-[50px] mx-auto text-gray-400'
 					onClick={() => handleReset()}

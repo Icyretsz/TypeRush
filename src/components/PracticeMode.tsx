@@ -5,7 +5,7 @@ import MainGameContainer from './MainGameContainer.tsx'
 import { SAMPLE_WORDS } from '../common/constant.ts'
 
 const PracticeMode = () => {
-	const [selectedDuration, setSelectedDuration] = useState<GameDuration>(15)
+	const [selectedDuration, setSelectedDuration] = useState<GameDuration>(0)
 	return (
 		<div>
 			<div className='flex justify-center'>
