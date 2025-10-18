@@ -42,7 +42,18 @@ export const InputKey = {
 	ARROW_DOWN: 'ArrowDown',
 	TAB: 'Tab',
 	ENTER: 'Enter',
+	ALT: 'Alt',
 }
+
+export const BLOCKED_KEYS = new Set([
+	InputKey.TAB,
+	InputKey.ENTER,
+	InputKey.ARROW_UP,
+	InputKey.ARROW_DOWN,
+	InputKey.ARROW_LEFT,
+	InputKey.ARROW_RIGHT,
+	InputKey.ALT,
+])
 
 export const TypingMode = {
 	PRACTICE: 'practice',
