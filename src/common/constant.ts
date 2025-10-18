@@ -1,4 +1,4 @@
-export const GAME_DURATION = [15, 30, 60, 0] as const
+export const GAME_DURATION = [15, 30, 60, 0]
 
 export const SAMPLE_WORDS = [
 	'about',
