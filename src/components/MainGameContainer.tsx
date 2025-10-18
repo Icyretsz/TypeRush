@@ -88,6 +88,7 @@ const MainGameContainer = ({
 
 	const handleSpacePress = () => {
 		if (typed.trim() === '') return
+
 		setCaretIdx(-1)
 
 		const currentResults = currentWordOriginal.split('').map((char, idx) => {
@@ -446,9 +447,9 @@ const MainGameContainer = ({
 													return newLocalWords
 												})
 											}
-
 											return
 										}
+										return
 									}
 									if (!startTime) {
 										setStartTime(Date.now())
