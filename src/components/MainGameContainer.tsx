@@ -1,5 +1,5 @@
 import { Button, Modal } from 'antd'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGameStore } from '../stores/useGameStore.ts'
 import Caret from './Caret.tsx'
 import { gsap } from 'gsap'
@@ -56,6 +56,16 @@ const MainGameContainer = ({
 	const [remainingTime, setRemainingTime] = useState<number>(duration)
 	const [timeElapsed, setTimeElapsed] = useState<number>(0)
 
+	const currentWordLocal = useMemo(
+		() => localWords[currentWordIdx] ?? null,
+		[currentWordIdx, localWords]
+	)
+
+	const currentWordOriginal = useMemo(
+		() => words[currentWordIdx] ?? null,
+		[currentWordIdx, words]
+	)
+
 	const calculateStats = useCallback(() => {
 		let correct = 0
 		let incorrect = 0
@@ -80,7 +90,7 @@ const MainGameContainer = ({
 		if (typed.trim() === '') return
 		setCaretIdx(-1)
 
-		const currentResults = words[currentWordIdx].split('').map((char, idx) => {
+		const currentResults = currentWordOriginal.split('').map((char, idx) => {
 			if (idx < typed.length) {
 				return typed[idx] === char
 					? CharacterState.CORRECT
@@ -89,8 +99,8 @@ const MainGameContainer = ({
 			return CharacterState.UNTYPED
 		})
 
-		if (typed.length > words[currentWordIdx].length) {
-			const overflowCount = typed.length - words[currentWordIdx].length
+		if (typed.length > currentWordOriginal.length) {
+			const overflowCount = typed.length - currentWordOriginal.length
 			for (let i = 0; i < overflowCount; i++) {
 				currentResults.push(CharacterState.INCORRECT)
 			}
@@ -163,7 +173,7 @@ const MainGameContainer = ({
 	useEffect(() => {
 		if (
 			currentWordIdx === words.length - 1 &&
-			caretIdx === words[currentWordIdx].length - 1
+			caretIdx === currentWordOriginal.length - 1
 		) {
 			const stats = calculateStats()
 			setResults(stats)
@@ -402,7 +412,7 @@ const MainGameContainer = ({
 				))}
 				{localWords?.map((word, wordIdx) => (
 					<span className='text-3xl' key={wordIdx}>
-						{word === localWords[currentWordIdx] && (
+						{word === currentWordLocal && (
 							<input
 								className='text-3xl opacity-0 absolute flex focus:outline-none focus:ring-0 focus:border-transparent'
 								autoFocus
@@ -428,11 +438,8 @@ const MainGameContainer = ({
 
 											// delete extended characters if typed length is greater than the original word length
 
-											if (newLength >= words[currentWordIdx].length) {
-												const newWord = localWords[currentWordIdx].slice(
-													0,
-													newLength
-												)
+											if (newLength >= currentWordOriginal.length) {
+												const newWord = currentWordLocal.slice(0, newLength)
 												setLocalWords(prev => {
 													const newLocalWords = [...prev]
 													newLocalWords[currentWordIdx] = newWord
@@ -447,10 +454,10 @@ const MainGameContainer = ({
 										setStartTime(Date.now())
 									}
 									if (
-										typed.length >= words[currentWordIdx].length &&
+										typed.length >= currentWordOriginal.length &&
 										mode === TypingMode.PRACTICE
 									) {
-										const newWord = localWords[currentWordIdx] + e.key
+										const newWord = currentWordLocal + e.key
 										setLocalWords(prev => {
 											const newLocalWords = [...prev]
 											newLocalWords[currentWordIdx] = newWord
@@ -458,7 +465,7 @@ const MainGameContainer = ({
 										})
 									}
 									if (mode === TypingMode.MULTIPLAYER) {
-										const nextChar = localWords[currentWordIdx]?.[caretIdx + 1]
+										const nextChar = currentWordLocal?.[caretIdx + 1]
 										if (nextChar && nextChar === e.key) {
 											//allow to next char only on typed correctly
 											setCaretIdx(prev => prev + 1)
