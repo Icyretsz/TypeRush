@@ -40,9 +40,6 @@ const MainGameContainer = ({
 
 	const [localWords, setLocalWords] = useState<string[]>(words)
 	const [currentWordIdx, setCurrentWordIdx] = useState(0)
-	const [currentWord, setCurrentWord] = useState<string | null>(
-		localWords[currentWordIdx]
-	)
 	const [typed, setTyped] = useState<string>('')
 	const [caretIdx, setCaretIdx] = useState(-1)
 	const [wordResults, setWordResults] = useState<Record<number, string[]>>({})
@@ -106,7 +103,7 @@ const MainGameContainer = ({
 
 		setCurrentWordIdx(prev => {
 			const nextIdx = prev + 1
-			setCurrentWord(localWords[nextIdx] ?? null)
+			if (!localWords[nextIdx]) return prev
 			return nextIdx
 		})
 		setTyped('')
@@ -115,7 +112,6 @@ const MainGameContainer = ({
 	const handleReset = useCallback(() => {
 		setCurrentWordIdx(0)
 		setTyped('')
-		setCurrentWord(words[0] ?? null)
 		setWordResults({})
 		setCaretIdx(-1)
 		setLocalWords(words)
@@ -406,7 +402,7 @@ const MainGameContainer = ({
 				))}
 				{localWords?.map((word, wordIdx) => (
 					<span className='text-3xl' key={wordIdx}>
-						{word === currentWord && (
+						{word === localWords[currentWordIdx] && (
 							<input
 								className='text-3xl opacity-0 absolute flex focus:outline-none focus:ring-0 focus:border-transparent'
 								autoFocus
@@ -442,7 +438,6 @@ const MainGameContainer = ({
 													newLocalWords[currentWordIdx] = newWord
 													return newLocalWords
 												})
-												setCurrentWord(newWord)
 											}
 
 											return
@@ -461,7 +456,6 @@ const MainGameContainer = ({
 											newLocalWords[currentWordIdx] = newWord
 											return newLocalWords
 										})
-										setCurrentWord(newWord)
 									}
 									if (mode === TypingMode.MULTIPLAYER) {
 										const nextChar = localWords[currentWordIdx]?.[caretIdx + 1]
