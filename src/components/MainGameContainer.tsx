@@ -15,6 +15,17 @@ import {
 import { TbReload } from 'react-icons/tb'
 gsap.registerPlugin(Flip)
 
+const PLAYER_COLORS = [
+	PlayerColor.RED,
+	PlayerColor.GREEN,
+	PlayerColor.AMBER,
+	PlayerColor.BLUE,
+]
+
+const getPlayerColor = (playerIndex: number) => {
+	return PLAYER_COLORS[playerIndex] || PlayerColor.GRAY
+}
+
 const MainGameContainer = ({
 	words,
 	mode,
@@ -47,16 +58,6 @@ const MainGameContainer = ({
 	const [startTime, setStartTime] = useState<number | null>(null)
 	const [remainingTime, setRemainingTime] = useState<number>(duration)
 	const [timeElapsed, setTimeElapsed] = useState<number>(0)
-
-	const getPlayerColor = (playerIndex: number) => {
-		const colors = [
-			PlayerColor.RED,
-			PlayerColor.GREEN,
-			PlayerColor.AMBER,
-			PlayerColor.BLUE,
-		]
-		return colors[playerIndex] || PlayerColor.GRAY
-	}
 
 	const calculateStats = useCallback(() => {
 		let correct = 0
