@@ -4,13 +4,14 @@ import { useGameStore } from '../stores/useGameStore.ts'
 import Caret from './Caret.tsx'
 import { gsap } from 'gsap'
 import { Flip } from 'gsap/Flip'
+import { type MainGameContainerProps } from '../common/types.ts'
 import {
 	InputKey,
 	CharacterState,
 	PlayerColor,
 	TypingMode,
-	type MainGameContainerProps,
-} from '../common/types.ts'
+	BLOCKED_KEYS,
+} from '../common/constant.ts'
 import { TbReload } from 'react-icons/tb'
 gsap.registerPlugin(Flip)
 
@@ -416,16 +417,7 @@ const MainGameContainer = ({
 										handleSpacePress()
 										return
 									}
-									if (
-										e.key === InputKey.TAB ||
-										e.key === InputKey.ENTER ||
-										[
-											InputKey.ARROW_UP,
-											InputKey.ARROW_DOWN,
-											InputKey.ARROW_LEFT,
-											InputKey.ARROW_RIGHT,
-										].includes(e.key)
-									) {
+									if (BLOCKED_KEYS.has(e.key)) {
 										e.preventDefault()
 										return
 									}

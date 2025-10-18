@@ -1,6 +1,6 @@
 import { Card, Modal } from 'antd'
 import { useGameStore } from '../stores/useGameStore.ts'
-import { PlayerColor } from '../common/types.ts'
+import { PlayerColor } from '../common/constant.ts'
 
 interface GameFinishModalProps {
 	displayFinishModal: boolean
