@@ -1,5 +1,5 @@
 import { Button, Modal } from 'antd'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGameStore } from '../stores/useGameStore.ts'
 import Caret from './Caret.tsx'
 import { gsap } from 'gsap'
@@ -65,6 +65,10 @@ const MainGameContainer = ({
 		() => words[currentWordIdx] ?? null,
 		[currentWordIdx, words]
 	)
+
+	const isTimedMode = duration !== 0
+	const isPracticeMode = mode === TypingMode.PRACTICE
+	const isMultiplayerMode = mode === TypingMode.MULTIPLAYER
 
 	const calculateStats = useCallback(() => {
 		let correct = 0
@@ -139,6 +143,189 @@ const MainGameContainer = ({
 		setResults(null)
 	}, [words, roomId, updateCaret, duration])
 
+	const shouldExtendWord = (
+		typedLength: number,
+		originalWordLength: number,
+		isPracticeMode: boolean
+	): boolean => {
+		return typedLength >= originalWordLength && isPracticeMode
+	}
+
+	const shouldAllowCharInMultiplayer = (
+		nextChar: string | undefined,
+		pressedKey: string
+	): boolean => {
+		return !!nextChar && nextChar === pressedKey
+	}
+
+	const handleBackspaceLogic = (
+		typed: string,
+		caretIdx: number,
+		currentWordOriginal: string,
+		currentWordLocal: string,
+		currentWordIdx: number,
+		setCaretIdx: (fn: (prev: number) => number) => void,
+		setLocalWords: (fn: (prev: string[]) => string[]) => void
+	) => {
+		if (typed.length === 0) return
+
+		const newLength = typed.length - 1
+
+		if (caretIdx === newLength) {
+			setCaretIdx(prev => Math.max(-1, prev - 1))
+		}
+
+		// Delete extended characters if typed length exceeds original word length
+		if (newLength >= currentWordOriginal.length) {
+			const newWord = currentWordLocal.slice(0, newLength)
+			setLocalWords(prev => {
+				const newLocalWords = [...prev]
+				newLocalWords[currentWordIdx] = newWord
+				return newLocalWords
+			})
+		}
+	}
+
+	const handleCharacterInput = (
+		key: string,
+		typed: string,
+		currentWordOriginal: string,
+		currentWordLocal: string,
+		currentWordIdx: number,
+		caretIdx: number,
+		isPracticeMode: boolean,
+		isMultiplayerMode: boolean,
+		setLocalWords: (fn: (prev: string[]) => string[]) => void,
+		setCaretIdx: (fn: (prev: number) => number) => void
+	): boolean => {
+		if (
+			shouldExtendWord(typed.length, currentWordOriginal.length, isPracticeMode)
+		) {
+			const newWord = currentWordLocal + key
+			setLocalWords(prev => {
+				const newLocalWords = [...prev]
+				newLocalWords[currentWordIdx] = newWord
+				return newLocalWords
+			})
+		}
+
+		if (isMultiplayerMode) {
+			const nextChar = currentWordLocal?.[caretIdx + 1]
+			if (shouldAllowCharInMultiplayer(nextChar, key)) {
+				setCaretIdx(prev => prev + 1)
+				return true
+			}
+			return false // preventDefault
+		}
+
+		// Default behavior for practice mode
+		setCaretIdx(prev => prev + 1)
+		return true
+	}
+
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === InputKey.SPACE) {
+			e.preventDefault()
+			handleSpacePress()
+			return
+		}
+
+		if (BLOCKED_KEYS.has(e.key)) {
+			e.preventDefault()
+			return
+		}
+
+		if (e.key === InputKey.BACKSPACE) {
+			handleBackspaceLogic(
+				typed,
+				caretIdx,
+				currentWordOriginal,
+				currentWordLocal,
+				currentWordIdx,
+				setCaretIdx,
+				setLocalWords
+			)
+			return
+		}
+
+		if (!startTime) {
+			setStartTime(Date.now())
+		}
+
+		const shouldNotPreventDefault = handleCharacterInput(
+			e.key,
+			typed,
+			currentWordOriginal,
+			currentWordLocal,
+			currentWordIdx,
+			caretIdx,
+			isPracticeMode,
+			isMultiplayerMode,
+			setLocalWords,
+			setCaretIdx
+		)
+
+		if (!shouldNotPreventDefault) {
+			e.preventDefault()
+		}
+	}
+
+	// const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+	// 	if (e.key === InputKey.SPACE) {
+	// 		e.preventDefault()
+	// 		handleSpacePress()
+	// 		return
+	// 	}
+	// 	if (BLOCKED_KEYS.has(e.key)) {
+	// 		e.preventDefault()
+	// 		return
+	// 	}
+	// 	if (e.key === InputKey.BACKSPACE) {
+	// 		if (typed.length > 0) {
+	// 			const newLength = typed.length - 1
+	//
+	// 			if (caretIdx === newLength) {
+	// 				setCaretIdx(prev => Math.max(-1, prev - 1))
+	// 			}
+	//
+	// 			// delete extended characters if typed length is greater than the original word length
+	//
+	// 			if (newLength >= currentWordOriginal.length) {
+	// 				const newWord = currentWordLocal.slice(0, newLength)
+	// 				setLocalWords(prev => {
+	// 					const newLocalWords = [...prev]
+	// 					newLocalWords[currentWordIdx] = newWord
+	// 					return newLocalWords
+	// 				})
+	// 			}
+	// 			return
+	// 		}
+	// 		return
+	// 	}
+	// 	if (!startTime) {
+	// 		setStartTime(Date.now())
+	// 	}
+	// 	if (typed.length >= currentWordOriginal.length && isPracticeMode) {
+	// 		const newWord = currentWordLocal + e.key
+	// 		setLocalWords(prev => {
+	// 			const newLocalWords = [...prev]
+	// 			newLocalWords[currentWordIdx] = newWord
+	// 			return newLocalWords
+	// 		})
+	// 	}
+	// 	if (isMultiplayerMode) {
+	// 		const nextChar = currentWordLocal?.[caretIdx + 1]
+	// 		if (nextChar && nextChar === e.key) {
+	// 			//allow to next char only on typed correctly
+	// 			setCaretIdx(prev => prev + 1)
+	// 		} else {
+	// 			e.preventDefault()
+	// 		}
+	// 	} else {
+	// 		setCaretIdx(prev => prev + 1)
+	// 	}
+	// }
+
 	useEffect(() => {
 		caretRefs.current = Array.from({ length: 4 }, () => null)
 	}, [])
@@ -147,7 +334,7 @@ const MainGameContainer = ({
 		if (!startTime) return
 
 		timerRef.current = setInterval(() => {
-			if (duration !== 0) setRemainingTime(prev => prev - 1)
+			if (isTimedMode) setRemainingTime(prev => prev - 1)
 			else setTimeElapsed(prev => prev + 1)
 		}, 1000)
 
@@ -157,19 +344,19 @@ const MainGameContainer = ({
 				timerRef.current = null
 			}
 		}
-	}, [duration, startTime])
+	}, [isTimedMode, startTime])
 
 	useEffect(() => {
 		setRemainingTime(duration)
 	}, [duration])
 
 	useEffect(() => {
-		if (remainingTime === 0 && duration !== 0 && timerRef.current) {
+		if (remainingTime === 0 && isTimedMode && timerRef.current) {
 			const stats = calculateStats()
 			setResults(stats)
 			if (timerRef.current) clearInterval(timerRef.current)
 		}
-	}, [calculateStats, handleReset, remainingTime, duration])
+	}, [calculateStats, handleReset, remainingTime, isTimedMode])
 
 	useEffect(() => {
 		if (
@@ -189,6 +376,7 @@ const MainGameContainer = ({
 		calculateStats,
 		handlePlayerFinish,
 		roomId,
+		currentWordOriginal.length,
 	])
 
 	useEffect(() => {
@@ -419,64 +607,7 @@ const MainGameContainer = ({
 								autoFocus
 								type='text'
 								value={typed}
-								onKeyDown={e => {
-									if (e.key === InputKey.SPACE) {
-										e.preventDefault()
-										handleSpacePress()
-										return
-									}
-									if (BLOCKED_KEYS.has(e.key)) {
-										e.preventDefault()
-										return
-									}
-									if (e.key === InputKey.BACKSPACE) {
-										if (typed.length > 0) {
-											const newLength = typed.length - 1
-
-											if (caretIdx === newLength) {
-												setCaretIdx(prev => Math.max(-1, prev - 1))
-											}
-
-											// delete extended characters if typed length is greater than the original word length
-
-											if (newLength >= currentWordOriginal.length) {
-												const newWord = currentWordLocal.slice(0, newLength)
-												setLocalWords(prev => {
-													const newLocalWords = [...prev]
-													newLocalWords[currentWordIdx] = newWord
-													return newLocalWords
-												})
-											}
-											return
-										}
-										return
-									}
-									if (!startTime) {
-										setStartTime(Date.now())
-									}
-									if (
-										typed.length >= currentWordOriginal.length &&
-										mode === TypingMode.PRACTICE
-									) {
-										const newWord = currentWordLocal + e.key
-										setLocalWords(prev => {
-											const newLocalWords = [...prev]
-											newLocalWords[currentWordIdx] = newWord
-											return newLocalWords
-										})
-									}
-									if (mode === TypingMode.MULTIPLAYER) {
-										const nextChar = currentWordLocal?.[caretIdx + 1]
-										if (nextChar && nextChar === e.key) {
-											//allow to next char only on typed correctly
-											setCaretIdx(prev => prev + 1)
-										} else {
-											e.preventDefault()
-										}
-									} else {
-										setCaretIdx(prev => prev + 1)
-									}
-								}}
+								onKeyDown={e => handleKeyDown(e)}
 								onChange={e => {
 									const value = e.target.value.replace(/ /g, '')
 									setTyped(value)
