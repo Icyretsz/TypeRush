@@ -42,7 +42,11 @@ export const InputKey = {
 	ARROW_DOWN: 'ArrowDown',
 	TAB: 'Tab',
 	ENTER: 'Enter',
+	ESCAPE: 'Escape',
 	ALT: 'Alt',
+	CONTROL: 'Control',
+	SHIFT: 'Shift',
+	META: 'Meta',
 }
 
 export const BLOCKED_KEYS = new Set([
@@ -53,6 +57,10 @@ export const BLOCKED_KEYS = new Set([
 	InputKey.ARROW_LEFT,
 	InputKey.ARROW_RIGHT,
 	InputKey.ALT,
+	InputKey.CONTROL,
+	InputKey.META,
+	InputKey.SHIFT,
+	InputKey.ESCAPE,
 ])
 
 export const TypingMode = {
