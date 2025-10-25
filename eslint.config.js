@@ -21,7 +21,7 @@ export default tseslint.config([
 		],
 		plugins: {
 			prettier: eslintPluginPrettier,
-			react: reactPlugin.configs.recommended.plugins,
+			react: reactPlugin,
 		},
 		rules: {
 			'prettier/prettier': 'error',

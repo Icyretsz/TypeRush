@@ -82,32 +82,22 @@ export interface MainGameContainerProps {
 	duration: GameDuration
 }
 
-export const InputKey = {
-	SPACE: ' ',
-	BACKSPACE: 'Backspace',
-	ARROW_LEFT: 'ArrowLeft',
-	ARROW_RIGHT: 'ArrowRight',
-	ARROW_UP: 'ArrowUp',
-	ARROW_DOWN: 'ArrowDown',
-	TAB: 'Tab',
-	ENTER: 'Enter',
+export interface GameResults {
+	accuracy: number
+	wpm: number
+	rawWpm: number
+	correct: number
+	incorrect: number
 }
 
-export const TypingMode = {
-	PRACTICE: 'practice',
-	MULTIPLAYER: 'multiplayer',
+export interface ResultsModalProps {
+	isOpen: boolean
+	results: GameResults | null
+	position?: number | null
+	onClose: () => void
 }
 
-export const PlayerColor = {
-	RED: '#ef4444',
-	GREEN: '#22c55e',
-	AMBER: '#f59e0b',
-	BLUE: '#3b82f6',
-	GRAY: '#6b7280',
-}
-
-export const CharacterState = {
-	CORRECT: 'correct',
-	INCORRECT: 'incorrect',
-	UNTYPED: 'untyped',
+export interface GameTimerProps {
+	time: number
+	className?: string
 }

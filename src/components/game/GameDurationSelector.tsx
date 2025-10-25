@@ -1,5 +1,5 @@
-import { type GameDuration } from '../common/types.ts'
-import { GAME_DURATION } from '../common/constant.ts'
+import { type GameDuration } from '../../common/types.ts'
+import { GAME_DURATION } from '../../common/constant.ts'
 
 interface GameDurationSelectorProps {
 	selectedDuration: GameDuration

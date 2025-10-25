@@ -1,5 +1,5 @@
 import GameDurationSelector from './GameDurationSelector.tsx'
-import type { GameDuration } from '../common/types.ts'
+import type { GameDuration } from '../../common/types.ts'
 
 interface ModeBarProps {
 	selectedDuration: GameDuration

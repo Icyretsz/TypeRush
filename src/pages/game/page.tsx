@@ -1,4 +1,4 @@
-import MainGameContainer from '../../components/MainGameContainer.tsx'
+import MainGameContainer from '../../components/game/MainGameContainer.tsx'
 import { SAMPLE_WORDS } from '../../common/constant.ts'
 
 const Page = () => {
