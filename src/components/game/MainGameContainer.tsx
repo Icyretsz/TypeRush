@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useGameStore } from '../../stores/useGameStore.ts'
 import Caret from './Caret.tsx'
 import { gsap } from 'gsap'
@@ -16,13 +16,11 @@ import {
 	handleBackspaceLogic,
 	handleCharacterInput,
 } from '../../game/logic/keyHandlers.ts'
-import {
-	generateWordResults,
-	shouldAdvanceToNextWord,
-} from '../../game/logic/typingLogic.ts'
-import { calculateTypingStats } from '../../game/logic/statsCalculator.ts'
-import { ResultsModal } from './ResultsModal.tsx'
-import { GameTimer } from './GameTimer.tsx'
+import { useTypingGame } from '../../game/hooks/useTypingGame'
+import { useGameTimer } from '../../game/hooks/useGameTimer'
+import { GameTimer } from './GameTimer'
+import { ResultsModal } from './ResultsModal'
+
 gsap.registerPlugin(Flip)
 
 const PLAYER_COLORS = [
@@ -43,81 +41,50 @@ const MainGameContainer = ({
 }: MainGameContainerProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const caretRefs = useRef<(HTMLSpanElement | null)[]>([])
-	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
 	const { updateCaret, roomId, players, socket, handlePlayerFinish, position } =
 		useGameStore()
 
-	const [localWords, setLocalWords] = useState<string[]>(words)
-	const [currentWordIdx, setCurrentWordIdx] = useState(0)
-	const [typed, setTyped] = useState<string>('')
-	const [caretIdx, setCaretIdx] = useState(-1)
-	const [wordResults, setWordResults] = useState<Record<number, string[]>>({})
-
-	const [results, setResults] = useState<null | {
-		accuracy: number
-		wpm: number
-		rawWpm: number
-		correct: number
-		incorrect: number
-	}>(null)
-
 	const [startTime, setStartTime] = useState<number | null>(null)
-	const [remainingTime, setRemainingTime] = useState<number>(duration)
-	const [timeElapsed, setTimeElapsed] = useState<number>(0)
-
-	const currentWordLocal = useMemo(
-		() => localWords[currentWordIdx] ?? null,
-		[currentWordIdx, localWords]
-	)
-
-	const currentWordOriginal = useMemo(
-		() => words[currentWordIdx] ?? null,
-		[currentWordIdx, words]
-	)
 
 	const isTimedMode = duration !== 0
 	const isPracticeMode = mode === TypingMode.PRACTICE
 	const isMultiplayerMode = mode === TypingMode.MULTIPLAYER
 
-	const handleSpacePress = () => {
-		if (!shouldAdvanceToNextWord(typed, currentWordIdx, words.length)) return
+	const {
+		localWords,
+		currentWordIdx,
+		typed,
+		caretIdx,
+		wordResults,
+		results,
+		currentWordLocal,
+		currentWordOriginal,
+		setLocalWords,
+		setTyped,
+		setCaretIdx,
+		handleSpacePress,
+		handleReset: resetGameState,
+		finishGame,
+	} = useTypingGame(words, duration, stats => {
+		handlePlayerFinish(roomId, stats)
+	})
 
-		setCaretIdx(-1)
-
-		const currentResults = generateWordResults(typed, currentWordOriginal)
-
-		setWordResults(prev => ({
-			...prev,
-			[currentWordIdx]: currentResults,
-		}))
-
-		setCurrentWordIdx(prev => {
-			const nextIdx = prev + 1
-			if (!localWords[nextIdx]) return prev
-			return nextIdx
-		})
-		setTyped('')
-	}
+	const { remainingTime, timeElapsed, resetTimer, stopTimer } = useGameTimer(
+		duration,
+		isTimedMode,
+		startTime,
+		() => finishGame(timeElapsed)
+	)
 
 	const handleReset = useCallback(() => {
-		setCurrentWordIdx(0)
-		setTyped('')
-		setWordResults({})
-		setCaretIdx(-1)
-		setLocalWords(words)
+		resetGameState()
+		resetTimer()
+		setStartTime(null)
 		if (roomId) {
 			updateCaret({ caretIdx: -1, wordIdx: 0 }, roomId)
 		}
-		if (timerRef.current) {
-			clearInterval(timerRef.current)
-			timerRef.current = null
-		}
-		setRemainingTime(duration)
-		setStartTime(null)
-		setTimeElapsed(0)
-		setResults(null)
-	}, [words, roomId, updateCaret, duration])
+	}, [resetGameState, resetTimer, roomId, updateCaret])
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === InputKey.SPACE) {
@@ -167,64 +134,21 @@ const MainGameContainer = ({
 	}
 
 	useEffect(() => {
-		caretRefs.current = Array.from({ length: 4 }, () => null)
-	}, [])
-
-	useEffect(() => {
-		if (!startTime) return
-
-		timerRef.current = setInterval(() => {
-			if (isTimedMode) setRemainingTime(prev => prev - 1)
-			else setTimeElapsed(prev => prev + 1)
-		}, 1000)
-
-		return () => {
-			if (timerRef.current) {
-				clearInterval(timerRef.current)
-				timerRef.current = null
-			}
-		}
-	}, [isTimedMode, startTime])
-
-	useEffect(() => {
-		setRemainingTime(duration)
-	}, [duration])
-
-	useEffect(() => {
-		if (remainingTime === 0 && isTimedMode && timerRef.current) {
-			const stats = calculateTypingStats(wordResults, duration, timeElapsed)
-			setResults(stats)
-			if (timerRef.current) clearInterval(timerRef.current)
-		}
-	}, [
-		handleReset,
-		remainingTime,
-		isTimedMode,
-		wordResults,
-		duration,
-		timeElapsed,
-	])
-
-	useEffect(() => {
 		if (
 			currentWordIdx === words.length - 1 &&
 			caretIdx === currentWordOriginal.length - 1
 		) {
-			const stats = calculateTypingStats(wordResults, duration, timeElapsed)
-			setResults(stats)
-			if (timerRef.current) clearInterval(timerRef.current)
-			handlePlayerFinish(roomId, stats)
+			finishGame(timeElapsed)
+			stopTimer()
 		}
 	}, [
 		currentWordIdx,
 		caretIdx,
-		duration,
-		words,
-		handlePlayerFinish,
-		roomId,
 		currentWordOriginal.length,
-		wordResults,
+		words.length,
+		finishGame,
 		timeElapsed,
+		stopTimer,
 	])
 
 	useEffect(() => {
@@ -233,6 +157,10 @@ const MainGameContainer = ({
 			updateCaret({ caretIdx, wordIdx: currentWordIdx }, roomId)
 		}
 	}, [caretIdx, currentWordIdx, roomId, updateCaret])
+
+	useEffect(() => {
+		caretRefs.current = Array.from({ length: 4 }, () => null)
+	}, [])
 
 	// Animate opponent carets
 	useEffect(() => {
@@ -321,7 +249,8 @@ const MainGameContainer = ({
 
 	return (
 		<div>
-			<GameTimer time={duration === 0 ? timeElapsed : remainingTime} />
+			<GameTimer time={isTimedMode ? remainingTime : timeElapsed} />
+
 			<div
 				ref={containerRef}
 				tabIndex={0}
@@ -372,10 +301,10 @@ const MainGameContainer = ({
 												: ''
 								}
 							} else if (wordIdx === currentWordIdx) {
-								if (idx < typed.length) {
+								if (idx >= currentWordOriginal.length) {
+									state = 'text-red-500' // Turn red on overflow
+								} else if (idx < typed.length) {
 									state = typed[idx] === char ? 'text-white' : 'text-red-500'
-								} else if (idx >= currentWordOriginal.length) {
-									state = 'text-red-500'
 								}
 							}
 							return (
@@ -392,6 +321,7 @@ const MainGameContainer = ({
 					</span>
 				))}
 			</div>
+
 			{mode === TypingMode.PRACTICE && (
 				<>
 					<ResultsModal

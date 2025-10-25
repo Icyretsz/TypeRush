@@ -82,15 +82,17 @@ export interface MainGameContainerProps {
 	duration: GameDuration
 }
 
+export interface GameResults {
+	accuracy: number
+	wpm: number
+	rawWpm: number
+	correct: number
+	incorrect: number
+}
+
 export interface ResultsModalProps {
 	isOpen: boolean
-	results: {
-		accuracy: number
-		wpm: number
-		rawWpm: number
-		correct: number
-		incorrect: number
-	} | null
+	results: GameResults | null
 	position?: number | null
 	onClose: () => void
 }
