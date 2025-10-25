@@ -162,11 +162,11 @@ const MainGameContainer = ({
 	])
 
 	useEffect(() => {
-		if (!roomId) return
+		if (!roomId || isPracticeMode) return
 		if (caretIdx !== -1 || currentWordIdx !== 0) {
 			updateCaret({ caretIdx, wordIdx: currentWordIdx }, roomId)
 		}
-	}, [caretIdx, currentWordIdx, roomId, updateCaret])
+	}, [caretIdx, currentWordIdx, isPracticeMode, roomId, updateCaret])
 
 	useEffect(() => {
 		caretRefs.current = Array.from({ length: 4 }, () => null)
@@ -260,7 +260,17 @@ const MainGameContainer = ({
 	return (
 		<div>
 			<GameTimer time={isTimedMode ? remainingTime : timeElapsed} />
-
+			<div className='flex flex-col gap-5 mb-10'>
+				{players.map((player, idx) => {
+					return (
+						<div key={idx}>
+							<p>{player.playerName}</p>
+							<p>caretIdx: {player.progress.caret.caretIdx}</p>
+							<p>wordIdx: {player.progress.caret.wordIdx}</p>
+						</div>
+					)
+				})}
+			</div>
 			<div
 				ref={containerRef}
 				tabIndex={0}

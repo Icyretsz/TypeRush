@@ -10,6 +10,7 @@ vi.mock('../../game/logic/keyHandlers', () => ({
 	handleCharacterInput: vi.fn(() => true),
 	shouldExtendWord: vi.fn(),
 	shouldAllowCharInMultiplayer: vi.fn(),
+	shouldStartTimer: vi.fn(),
 }))
 
 vi.mock('../../stores/useGameStore', () => ({
