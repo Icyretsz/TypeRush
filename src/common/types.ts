@@ -94,3 +94,8 @@ export interface ResultsModalProps {
 	position?: number | null
 	onClose: () => void
 }
+
+export interface GameTimerProps {
+	time: number
+	className?: string
+}

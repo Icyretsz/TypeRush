@@ -22,6 +22,7 @@ import {
 } from '../../game/logic/typingLogic.ts'
 import { calculateTypingStats } from '../../game/logic/statsCalculator.ts'
 import { ResultsModal } from './ResultsModal.tsx'
+import { GameTimer } from './GameTimer.tsx'
 gsap.registerPlugin(Flip)
 
 const PLAYER_COLORS = [
@@ -320,15 +321,7 @@ const MainGameContainer = ({
 
 	return (
 		<div>
-			{duration !== 0 ? (
-				<div className='mb-[10px] text-4xl font-bold text-accent-primary'>
-					{remainingTime}
-				</div>
-			) : (
-				<div className='mb-[10px] text-4xl font-bold text-accent-primary'>
-					{timeElapsed}
-				</div>
-			)}
+			<GameTimer time={duration === 0 ? timeElapsed : remainingTime} />
 			<div
 				ref={containerRef}
 				tabIndex={0}
