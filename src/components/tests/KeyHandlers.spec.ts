@@ -67,7 +67,9 @@ describe('handleBackspaceLogic', () => {
 			setLocalWords
 		)
 
-		expect(setCaretIdx).toHaveBeenCalled()
+		expect(setCaretIdx).toHaveBeenCalledWith(expect.any(Function))
+		const updateFn = setCaretIdx.mock.calls[0][0]
+		expect(updateFn(2)).toBe(1)
 	})
 
 	it('should trim word when typed length exceeds original', () => {
@@ -88,6 +90,42 @@ describe('handleBackspaceLogic', () => {
 		const updateFn = setLocalWords.mock.calls[0][0]
 		const result = updateFn(['helloworld', 'test'])
 		expect(result[0]).toBe('helloworl')
+	})
+
+	it('should handle backspace when caret is not at typed length', () => {
+		const setCaretIdx = vi.fn()
+		const setLocalWords = vi.fn()
+
+		handleBackspaceLogic(
+			'hello',
+			3,
+			'hello',
+			'hello',
+			0,
+			setCaretIdx,
+			setLocalWords
+		)
+
+		expect(setCaretIdx).not.toHaveBeenCalled()
+		expect(setLocalWords).not.toHaveBeenCalled()
+	})
+
+	it('should handle backspace at caret position -1', () => {
+		const setCaretIdx = vi.fn()
+		const setLocalWords = vi.fn()
+
+		handleBackspaceLogic(
+			'h',
+			0,
+			'hello',
+			'hello',
+			0,
+			setCaretIdx,
+			setLocalWords
+		)
+
+		const updateFn = setCaretIdx.mock.calls[0][0]
+		expect(updateFn(0)).toBe(-1) // Math.max(-1, 0 - 1)
 	})
 })
 
@@ -110,7 +148,55 @@ describe('handleCharacterInput', () => {
 		)
 
 		expect(setLocalWords).toHaveBeenCalled()
+		const updateFn = setLocalWords.mock.calls[0][0]
+		const result = updateFn(['hello', 'test'])
+		expect(result[0]).toBe('hellox')
+
 		expect(setCaretIdx).toHaveBeenCalled()
+	})
+
+	it('should update caret in practice mode without extending', () => {
+		const setLocalWords = vi.fn()
+		const setCaretIdx = vi.fn()
+
+		handleCharacterInput(
+			'e',
+			'h',
+			'hello',
+			'hello',
+			0,
+			0,
+			true,
+			false,
+			setLocalWords,
+			setCaretIdx
+		)
+
+		expect(setLocalWords).not.toHaveBeenCalled()
+		expect(setCaretIdx).toHaveBeenCalled()
+	})
+
+	it('should handle edge case: extending at exact boundary', () => {
+		const setLocalWords = vi.fn()
+		const setCaretIdx = vi.fn()
+
+		handleCharacterInput(
+			'o',
+			'hell',
+			'hell',
+			'hell',
+			0,
+			3, // at last char
+			true,
+			false,
+			setLocalWords,
+			setCaretIdx
+		)
+
+		expect(setLocalWords).toHaveBeenCalled()
+		const updateFn = setLocalWords.mock.calls[0][0]
+		const result = updateFn(['hell', 'world'])
+		expect(result[0]).toBe('hello')
 	})
 
 	it('should prevent default in multiplayer when wrong char is pressed', () => {

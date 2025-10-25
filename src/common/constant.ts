@@ -66,7 +66,7 @@ export const BLOCKED_KEYS = new Set([
 export const TypingMode = {
 	PRACTICE: 'practice',
 	MULTIPLAYER: 'multiplayer',
-}
+} as const
 
 export const PlayerColor = {
 	RED: '#ef4444',

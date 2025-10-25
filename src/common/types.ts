@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io-client'
-import type { GAME_DURATION } from './constant.ts'
+import type { GAME_DURATION, TypingMode } from './constant.ts'
 
 export interface Caret {
 	caretIdx: number
@@ -78,7 +78,7 @@ export type GameDuration = (typeof GAME_DURATION)[number]
 
 export interface MainGameContainerProps {
 	words: string[]
-	mode: 'practice' | 'multiplayer'
+	mode: (typeof TypingMode)[keyof typeof TypingMode]
 	duration: GameDuration
 }
 
