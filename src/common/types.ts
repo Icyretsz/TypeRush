@@ -81,3 +81,16 @@ export interface MainGameContainerProps {
 	mode: 'practice' | 'multiplayer'
 	duration: GameDuration
 }
+
+export interface ResultsModalProps {
+	isOpen: boolean
+	results: {
+		accuracy: number
+		wpm: number
+		rawWpm: number
+		correct: number
+		incorrect: number
+	} | null
+	position?: number | null
+	onClose: () => void
+}
