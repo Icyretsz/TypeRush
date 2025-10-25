@@ -13,6 +13,15 @@ import {
 	BLOCKED_KEYS,
 } from '../common/constant.ts'
 import { TbReload } from 'react-icons/tb'
+import {
+	handleBackspaceLogic,
+	handleCharacterInput,
+} from '../game/logic/keyHandlers.ts'
+import {
+	generateWordResults,
+	shouldAdvanceToNextWord,
+} from '../game/logic/typingLogic.ts'
+import { calculateTypingStats } from '../game/logic/statsCalculator.ts'
 gsap.registerPlugin(Flip)
 
 const PLAYER_COLORS = [
@@ -70,46 +79,12 @@ const MainGameContainer = ({
 	const isPracticeMode = mode === TypingMode.PRACTICE
 	const isMultiplayerMode = mode === TypingMode.MULTIPLAYER
 
-	const calculateStats = useCallback(() => {
-		let correct = 0
-		let incorrect = 0
-
-		Object.values(wordResults).forEach(results => {
-			results.forEach(r => {
-				if (r === CharacterState.CORRECT) correct++
-				if (r === CharacterState.INCORRECT) incorrect++
-			})
-		})
-
-		const totalTyped = correct + incorrect
-		const accuracy = totalTyped > 0 ? (correct / totalTyped) * 100 : 0
-		const timeInMinutes = duration !== 0 ? duration / 60 : timeElapsed / 60
-		const wpm = correct / 5 / timeInMinutes
-		const rawWpm = totalTyped / 5 / timeInMinutes
-
-		return { accuracy, wpm, rawWpm, correct, incorrect }
-	}, [wordResults, duration, timeElapsed])
-
 	const handleSpacePress = () => {
-		if (typed.trim() === '') return
+		if (!shouldAdvanceToNextWord(typed, currentWordIdx, words.length)) return
 
 		setCaretIdx(-1)
 
-		const currentResults = currentWordOriginal.split('').map((char, idx) => {
-			if (idx < typed.length) {
-				return typed[idx] === char
-					? CharacterState.CORRECT
-					: CharacterState.INCORRECT
-			}
-			return CharacterState.UNTYPED
-		})
-
-		if (typed.length > currentWordOriginal.length) {
-			const overflowCount = typed.length - currentWordOriginal.length
-			for (let i = 0; i < overflowCount; i++) {
-				currentResults.push(CharacterState.INCORRECT)
-			}
-		}
+		const currentResults = generateWordResults(typed, currentWordOriginal)
 
 		setWordResults(prev => ({
 			...prev,
@@ -142,86 +117,6 @@ const MainGameContainer = ({
 		setTimeElapsed(0)
 		setResults(null)
 	}, [words, roomId, updateCaret, duration])
-
-	const shouldExtendWord = (
-		typedLength: number,
-		originalWordLength: number,
-		isPracticeMode: boolean
-	): boolean => {
-		return typedLength >= originalWordLength && isPracticeMode
-	}
-
-	const shouldAllowCharInMultiplayer = (
-		nextChar: string | undefined,
-		pressedKey: string
-	): boolean => {
-		return !!nextChar && nextChar === pressedKey
-	}
-
-	const handleBackspaceLogic = (
-		typed: string,
-		caretIdx: number,
-		currentWordOriginal: string,
-		currentWordLocal: string,
-		currentWordIdx: number,
-		setCaretIdx: (fn: (prev: number) => number) => void,
-		setLocalWords: (fn: (prev: string[]) => string[]) => void
-	) => {
-		if (typed.length === 0) return
-
-		const newLength = typed.length - 1
-
-		if (caretIdx === newLength) {
-			setCaretIdx(prev => Math.max(-1, prev - 1))
-		}
-
-		// Delete extended characters if typed length exceeds original word length
-		if (newLength >= currentWordOriginal.length) {
-			const newWord = currentWordLocal.slice(0, newLength)
-			setLocalWords(prev => {
-				const newLocalWords = [...prev]
-				newLocalWords[currentWordIdx] = newWord
-				return newLocalWords
-			})
-		}
-	}
-
-	const handleCharacterInput = (
-		key: string,
-		typed: string,
-		currentWordOriginal: string,
-		currentWordLocal: string,
-		currentWordIdx: number,
-		caretIdx: number,
-		isPracticeMode: boolean,
-		isMultiplayerMode: boolean,
-		setLocalWords: (fn: (prev: string[]) => string[]) => void,
-		setCaretIdx: (fn: (prev: number) => number) => void
-	): boolean => {
-		if (
-			shouldExtendWord(typed.length, currentWordOriginal.length, isPracticeMode)
-		) {
-			const newWord = currentWordLocal + key
-			setLocalWords(prev => {
-				const newLocalWords = [...prev]
-				newLocalWords[currentWordIdx] = newWord
-				return newLocalWords
-			})
-		}
-
-		if (isMultiplayerMode) {
-			const nextChar = currentWordLocal?.[caretIdx + 1]
-			if (shouldAllowCharInMultiplayer(nextChar, key)) {
-				setCaretIdx(prev => prev + 1)
-				return true
-			}
-			return false // preventDefault
-		}
-
-		// Default behavior for practice mode
-		setCaretIdx(prev => prev + 1)
-		return true
-	}
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === InputKey.SPACE) {
@@ -270,62 +165,6 @@ const MainGameContainer = ({
 		}
 	}
 
-	// const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-	// 	if (e.key === InputKey.SPACE) {
-	// 		e.preventDefault()
-	// 		handleSpacePress()
-	// 		return
-	// 	}
-	// 	if (BLOCKED_KEYS.has(e.key)) {
-	// 		e.preventDefault()
-	// 		return
-	// 	}
-	// 	if (e.key === InputKey.BACKSPACE) {
-	// 		if (typed.length > 0) {
-	// 			const newLength = typed.length - 1
-	//
-	// 			if (caretIdx === newLength) {
-	// 				setCaretIdx(prev => Math.max(-1, prev - 1))
-	// 			}
-	//
-	// 			// delete extended characters if typed length is greater than the original word length
-	//
-	// 			if (newLength >= currentWordOriginal.length) {
-	// 				const newWord = currentWordLocal.slice(0, newLength)
-	// 				setLocalWords(prev => {
-	// 					const newLocalWords = [...prev]
-	// 					newLocalWords[currentWordIdx] = newWord
-	// 					return newLocalWords
-	// 				})
-	// 			}
-	// 			return
-	// 		}
-	// 		return
-	// 	}
-	// 	if (!startTime) {
-	// 		setStartTime(Date.now())
-	// 	}
-	// 	if (typed.length >= currentWordOriginal.length && isPracticeMode) {
-	// 		const newWord = currentWordLocal + e.key
-	// 		setLocalWords(prev => {
-	// 			const newLocalWords = [...prev]
-	// 			newLocalWords[currentWordIdx] = newWord
-	// 			return newLocalWords
-	// 		})
-	// 	}
-	// 	if (isMultiplayerMode) {
-	// 		const nextChar = currentWordLocal?.[caretIdx + 1]
-	// 		if (nextChar && nextChar === e.key) {
-	// 			//allow to next char only on typed correctly
-	// 			setCaretIdx(prev => prev + 1)
-	// 		} else {
-	// 			e.preventDefault()
-	// 		}
-	// 	} else {
-	// 		setCaretIdx(prev => prev + 1)
-	// 	}
-	// }
-
 	useEffect(() => {
 		caretRefs.current = Array.from({ length: 4 }, () => null)
 	}, [])
@@ -352,18 +191,25 @@ const MainGameContainer = ({
 
 	useEffect(() => {
 		if (remainingTime === 0 && isTimedMode && timerRef.current) {
-			const stats = calculateStats()
+			const stats = calculateTypingStats(wordResults, duration, timeElapsed)
 			setResults(stats)
 			if (timerRef.current) clearInterval(timerRef.current)
 		}
-	}, [calculateStats, handleReset, remainingTime, isTimedMode])
+	}, [
+		handleReset,
+		remainingTime,
+		isTimedMode,
+		wordResults,
+		duration,
+		timeElapsed,
+	])
 
 	useEffect(() => {
 		if (
 			currentWordIdx === words.length - 1 &&
 			caretIdx === currentWordOriginal.length - 1
 		) {
-			const stats = calculateStats()
+			const stats = calculateTypingStats(wordResults, duration, timeElapsed)
 			setResults(stats)
 			if (timerRef.current) clearInterval(timerRef.current)
 			handlePlayerFinish(roomId, stats)
@@ -373,10 +219,11 @@ const MainGameContainer = ({
 		caretIdx,
 		duration,
 		words,
-		calculateStats,
 		handlePlayerFinish,
 		roomId,
 		currentWordOriginal.length,
+		wordResults,
+		timeElapsed,
 	])
 
 	useEffect(() => {
@@ -469,105 +316,10 @@ const MainGameContainer = ({
 		})
 	}, [currentWordIdx, caretIdx, localWords])
 
-	// Initial caret positioning for all players
-	useEffect(() => {
-		if (!containerRef.current) return
-
-		requestAnimationFrame(() => {
-			// Position own caret
-			const ownCaretElement = caretRefs.current[3]
-			if (ownCaretElement) {
-				const target = containerRef.current?.querySelector(
-					`[data-word="0"][data-char="0"]`
-				) as HTMLElement | null
-
-				if (target) {
-					target.parentNode?.insertBefore(ownCaretElement, target)
-				}
-			}
-
-			// Position other players' carets
-			if (!socket) return
-			const otherPlayers = players.filter(p => p.id !== socket.id)
-
-			otherPlayers.forEach((player, playerIndex) => {
-				const caretElement = caretRefs.current[playerIndex]
-				if (!caretElement) return
-
-				const caret = player.progress?.caret
-				const wordIdx = caret?.wordIdx ?? 0
-				const caretIdx = caret?.caretIdx ?? -1
-
-				let target: HTMLElement | null = null
-
-				if (caretIdx === -1) {
-					target = containerRef.current?.querySelector(
-						`[data-word="${wordIdx}"][data-char="0"]`
-					) as HTMLElement | null
-
-					if (target) {
-						target.parentNode?.insertBefore(caretElement, target)
-					}
-				} else {
-					target = containerRef.current?.querySelector(
-						`[data-word="${wordIdx}"][data-char="${caretIdx}"]`
-					) as HTMLElement | null
-
-					if (target) {
-						target.appendChild(caretElement)
-					}
-				}
-			})
-		})
-	}, []) // Consider adding [players, socket] if players can change on mount
-
 	const otherPlayers = socket ? players.filter(p => p.id !== socket.id) : []
 
 	return (
 		<div>
-			{/*<p>Current id: {currentWordIdx}</p>*/}
-			{/*<p>Current word: {currentWord}</p>*/}
-			{/*<p>Typed: {typed}</p>*/}
-			{/*<p>Typed length: {typed?.length}</p>*/}
-			{/*<p>*/}
-			{/*	Caret index: {caretIdx} Word index: {currentWordIdx}*/}
-			{/*</p>*/}
-			{/*<p>Players: {players.length}/4</p>*/}
-
-			{/*<div className='mb-4'>*/}
-			{/*	{otherPlayers.map((player, index) => {*/}
-			{/*		const caret = player.progress?.caret*/}
-			{/*		return (*/}
-			{/*			<div key={player.id} className='text-sm'>*/}
-			{/*				<span style={{ color: getPlayerColor(index) }}>*/}
-			{/*					{player.playerName}*/}
-			{/*				</span>*/}
-			{/*				: Word {caret?.wordIdx ?? 0}, Position {caret?.caretIdx ?? -1}*/}
-			{/*			</div>*/}
-			{/*		)*/}
-			{/*	})}*/}
-			{/*</div>*/}
-
-			{/*{mode === 'practice' && (*/}
-			{/*	<div>*/}
-			{/*		Duration:{' '}*/}
-			{/*		{GAME_DURATION &&*/}
-			{/*			GAME_DURATION.map((duration, idx) => {*/}
-			{/*				return (*/}
-			{/*					<span*/}
-			{/*						onClick={() => {*/}
-			{/*							setSelectedDuration(duration)*/}
-			{/*							setRemainingTime(duration)*/}
-			{/*						}}*/}
-			{/*						key={idx}*/}
-			{/*						className={`${duration === selectedDuration ? 'font-bold text-yellow-400' : ''} mr-2 cursor-pointer`}*/}
-			{/*					>*/}
-			{/*						{duration === 0 ? 'No time' : duration}*/}
-			{/*					</span>*/}
-			{/*				)*/}
-			{/*			})}*/}
-			{/*	</div>*/}
-			{/*)}*/}
 			{duration !== 0 ? (
 				<div className='mb-[10px] text-4xl font-bold text-accent-primary'>
 					{remainingTime}
@@ -629,6 +381,8 @@ const MainGameContainer = ({
 							} else if (wordIdx === currentWordIdx) {
 								if (idx < typed.length) {
 									state = typed[idx] === char ? 'text-white' : 'text-red-500'
+								} else if (idx >= currentWordOriginal.length) {
+									state = 'text-red-500'
 								}
 							}
 							return (
