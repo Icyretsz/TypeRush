@@ -76,3 +76,17 @@ export const handleCharacterInput = (
 	setCaretIdx(prev => prev + 1)
 	return true
 }
+
+export const shouldStartTimer = (
+	startTime: number | null,
+	key: string,
+	blockedKeys: Set<string>
+): boolean => {
+	if (startTime !== null) return false
+
+	if (key === ' ' || key === 'Backspace') return false
+
+	if (blockedKeys.has(key)) return false
+
+	return true
+}

@@ -14,6 +14,7 @@ import { TbReload } from 'react-icons/tb'
 import {
 	handleBackspaceLogic,
 	handleCharacterInput,
+	shouldStartTimer,
 } from '../../game/logic/keyHandlers.ts'
 import { useTypingGame } from '../../game/hooks/useTypingGame'
 import { useGameTimer } from '../../game/hooks/useGameTimer'
@@ -118,7 +119,7 @@ const MainGameContainer = ({
 			return
 		}
 
-		if (!startTime) {
+		if (shouldStartTimer(startTime, e.key, BLOCKED_KEYS)) {
 			setStartTime(Date.now())
 		}
 
