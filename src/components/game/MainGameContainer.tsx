@@ -400,34 +400,6 @@ const MainGameContainer = ({
 				))}
 			</div>
 			{mode === TypingMode.PRACTICE && (
-				// <Modal
-				// 	open={!!results}
-				// 	onCancel={handleReset}
-				// 	footer={[
-				// 		<Button key='close' onClick={handleReset}>
-				// 			Close
-				// 		</Button>,
-				// 	]}
-				// 	title='Your Results'
-				// >
-				// 	{results && (
-				// 		<div>
-				// 			<p>Accuracy: {results.accuracy.toFixed(1)}%</p>
-				// 			<p>WPM: {results.wpm.toFixed(1)}</p>
-				// 			<p>Raw WPM: {results.rawWpm.toFixed(1)}</p>
-				// 			<p>Correct chars: {results.correct}</p>
-				// 			<p>Incorrect chars: {results.incorrect}</p>
-				// 		</div>
-				// 	)}
-				// </Modal>
-				<ResultsModal
-					isOpen={!!results}
-					results={results}
-					position={position}
-					onClose={handleReset}
-				/>
-			)}
-			{mode === TypingMode.PRACTICE && (
 				<>
 					<ResultsModal
 						isOpen={!!results}

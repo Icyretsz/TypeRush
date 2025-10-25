@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { GameDuration } from '../../common/types.ts'
-import ModeBar from './modeBar.tsx'
+import ModeBar from './ModeBar.tsx'
 import MainGameContainer from './MainGameContainer.tsx'
 import { SAMPLE_WORDS } from '../../common/constant.ts'
 
