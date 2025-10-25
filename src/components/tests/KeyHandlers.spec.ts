@@ -4,6 +4,7 @@ import {
 	shouldAllowCharInMultiplayer,
 	handleBackspaceLogic,
 	handleCharacterInput,
+	shouldStartTimer,
 } from '../../game/logic/keyHandlers.ts'
 
 describe('shouldExtendWord', () => {
@@ -239,5 +240,30 @@ describe('handleCharacterInput', () => {
 
 		expect(result).toBe(true)
 		expect(setCaretIdx).toHaveBeenCalled()
+	})
+})
+
+describe('shouldStartTimer', () => {
+	const blockedKeys = new Set(['Tab', 'Escape'])
+
+	it('should return true when startTime is null and key is regular character', () => {
+		expect(shouldStartTimer(null, 'h', blockedKeys)).toBe(true)
+	})
+
+	it('should return false when startTime is already set', () => {
+		expect(shouldStartTimer(Date.now(), 'h', blockedKeys)).toBe(false)
+	})
+
+	it('should return false for space key', () => {
+		expect(shouldStartTimer(null, ' ', blockedKeys)).toBe(false)
+	})
+
+	it('should return false for backspace key', () => {
+		expect(shouldStartTimer(null, 'Backspace', blockedKeys)).toBe(false)
+	})
+
+	it('should return false for blocked keys', () => {
+		expect(shouldStartTimer(null, 'Tab', blockedKeys)).toBe(false)
+		expect(shouldStartTimer(null, 'Escape', blockedKeys)).toBe(false)
 	})
 })
