@@ -46,24 +46,27 @@ export const getCharacterDisplayState = (
 	currentWordIdx: number,
 	typed: string,
 	char: string,
-	wordResults: Record<number, string[]>
+	wordResults: Record<number, string[]>,
+	currentWordOriginal: string
 ): string => {
+	let state = ''
 	if (wordIdx < currentWordIdx) {
 		const storedResults = wordResults[wordIdx]
 		if (storedResults && storedResults[charIdx]) {
-			if (storedResults[charIdx] === CharacterState.CORRECT) {
-				return 'text-white'
-			}
-			if (storedResults[charIdx] === CharacterState.INCORRECT) {
-				return 'text-red-500'
-			}
+			state =
+				storedResults[charIdx] === CharacterState.CORRECT
+					? 'text-white'
+					: storedResults[charIdx] === CharacterState.INCORRECT
+						? 'text-red-500'
+						: ''
 		}
-		return ''
+	} else if (wordIdx === currentWordIdx) {
+		if (charIdx >= currentWordOriginal.length) {
+			state = 'text-red-500' // Turn red on overflow
+		} else if (charIdx < typed.length) {
+			state = typed[charIdx] === char ? 'text-white' : 'text-red-500'
+		}
 	}
 
-	if (wordIdx === currentWordIdx && charIdx < typed.length) {
-		return typed[charIdx] === char ? 'text-white' : 'text-red-500'
-	}
-
-	return ''
+	return state
 }

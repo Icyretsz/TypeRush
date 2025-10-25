@@ -6,7 +6,6 @@ import { Flip } from 'gsap/Flip'
 import { type MainGameContainerProps } from '../../common/types.ts'
 import {
 	InputKey,
-	CharacterState,
 	PlayerColor,
 	TypingMode,
 	BLOCKED_KEYS,
@@ -20,6 +19,7 @@ import { useTypingGame } from '../../game/hooks/useTypingGame'
 import { useGameTimer } from '../../game/hooks/useGameTimer'
 import { GameTimer } from './GameTimer'
 import { ResultsModal } from './ResultsModal'
+import { getCharacterDisplayState } from '../../game/logic/typingLogic.ts'
 
 gsap.registerPlugin(Flip)
 
@@ -298,24 +298,15 @@ const MainGameContainer = ({
 							/>
 						)}
 						{word?.split('').map((char, idx) => {
-							let state = ''
-							if (wordIdx < currentWordIdx) {
-								const storedResults = wordResults[wordIdx]
-								if (storedResults && storedResults[idx]) {
-									state =
-										storedResults[idx] === CharacterState.CORRECT
-											? 'text-white'
-											: storedResults[idx] === CharacterState.INCORRECT
-												? 'text-red-500'
-												: ''
-								}
-							} else if (wordIdx === currentWordIdx) {
-								if (idx >= currentWordOriginal.length) {
-									state = 'text-red-500' // Turn red on overflow
-								} else if (idx < typed.length) {
-									state = typed[idx] === char ? 'text-white' : 'text-red-500'
-								}
-							}
+							const state = getCharacterDisplayState(
+								wordIdx,
+								idx,
+								currentWordIdx,
+								typed,
+								char,
+								wordResults,
+								currentWordOriginal
+							)
 							return (
 								<span
 									key={idx}
