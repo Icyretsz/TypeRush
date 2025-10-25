@@ -41,6 +41,7 @@ const MainGameContainer = ({
 }: MainGameContainerProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const caretRefs = useRef<(HTMLSpanElement | null)[]>([])
+	const hasFinishedRef = useRef(false)
 
 	const { updateCaret, roomId, players, socket, handlePlayerFinish, position } =
 		useGameStore()
@@ -74,13 +75,19 @@ const MainGameContainer = ({
 		duration,
 		isTimedMode,
 		startTime,
-		() => finishGame(timeElapsed)
+		() => {
+			if (!hasFinishedRef.current) {
+				hasFinishedRef.current = true
+				finishGame(timeElapsed)
+			}
+		}
 	)
 
 	const handleReset = useCallback(() => {
 		resetGameState()
 		resetTimer()
 		setStartTime(null)
+		hasFinishedRef.current = false // Reset the flag
 		if (roomId) {
 			updateCaret({ caretIdx: -1, wordIdx: 0 }, roomId)
 		}
@@ -135,9 +142,11 @@ const MainGameContainer = ({
 
 	useEffect(() => {
 		if (
+			!hasFinishedRef.current &&
 			currentWordIdx === words.length - 1 &&
 			caretIdx === currentWordOriginal.length - 1
 		) {
+			hasFinishedRef.current = true
 			finishGame(timeElapsed)
 			stopTimer()
 		}
