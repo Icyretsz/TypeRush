@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useGameStore } from '../../stores/useGameStore.ts'
-import JoinRoomModal from '../../components/JoinRoomModal.tsx'
-import MainGameContainer from '../../components/MainGameContainer.tsx'
-import GameStartModal from '../../components/GameStartModal.tsx'
+import JoinRoomModal from '../../components/game/JoinRoomModal.tsx'
+import MainGameContainer from '../../components/game/MainGameContainer.tsx'
+import GameStartModal from '../../components/game/GameStartModal.tsx'
 import { Button } from 'antd'
 import { PiCrownFill } from 'react-icons/pi'
-import GameFinishModal from '../../components/GameFinishModal.tsx'
+import GameFinishModal from '../../components/game/GameFinishModal.tsx'
 import { SAMPLE_WORDS } from '../../common/constant.ts'
 
 const Page = () => {

@@ -1,6 +1,6 @@
 import React from 'react'
-import TypingAnimation from '../components/TypingAnimationLogo.tsx'
-import PracticeMode from '../components/PracticeMode.tsx'
+import TypingAnimation from '../components/game/TypingAnimationLogo.tsx'
+import PracticeMode from '../components/game/PracticeMode.tsx'
 const LandingPage = (): React.JSX.Element => {
 	return (
 		<div className='flex min-h-screen items-center justify-center flex-col gap-10 mt-[-50px]'>

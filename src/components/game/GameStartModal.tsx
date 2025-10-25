@@ -1,6 +1,6 @@
 import { Modal } from 'antd'
 import { useEffect, useState } from 'react'
-import { useGameStore } from '../stores/useGameStore.ts'
+import { useGameStore } from '../../stores/useGameStore.ts'
 
 interface GameStartModalProps {
 	duration: number

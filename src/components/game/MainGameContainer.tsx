@@ -1,27 +1,27 @@
-import { Button, Modal } from 'antd'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useGameStore } from '../stores/useGameStore.ts'
+import { useGameStore } from '../../stores/useGameStore.ts'
 import Caret from './Caret.tsx'
 import { gsap } from 'gsap'
 import { Flip } from 'gsap/Flip'
-import { type MainGameContainerProps } from '../common/types.ts'
+import { type MainGameContainerProps } from '../../common/types.ts'
 import {
 	InputKey,
 	CharacterState,
 	PlayerColor,
 	TypingMode,
 	BLOCKED_KEYS,
-} from '../common/constant.ts'
+} from '../../common/constant.ts'
 import { TbReload } from 'react-icons/tb'
 import {
 	handleBackspaceLogic,
 	handleCharacterInput,
-} from '../game/logic/keyHandlers.ts'
+} from '../../game/logic/keyHandlers.ts'
 import {
 	generateWordResults,
 	shouldAdvanceToNextWord,
-} from '../game/logic/typingLogic.ts'
-import { calculateTypingStats } from '../game/logic/statsCalculator.ts'
+} from '../../game/logic/typingLogic.ts'
+import { calculateTypingStats } from '../../game/logic/statsCalculator.ts'
+import { ResultsModal } from './ResultsModal.tsx'
 gsap.registerPlugin(Flip)
 
 const PLAYER_COLORS = [
@@ -400,54 +400,53 @@ const MainGameContainer = ({
 				))}
 			</div>
 			{mode === TypingMode.PRACTICE && (
-				<Modal
-					open={!!results}
-					onCancel={handleReset}
-					footer={[
-						<Button key='close' onClick={handleReset}>
-							Close
-						</Button>,
-					]}
-					title='Your Results'
-				>
-					{results && (
-						<div>
-							<p>Accuracy: {results.accuracy.toFixed(1)}%</p>
-							<p>WPM: {results.wpm.toFixed(1)}</p>
-							<p>Raw WPM: {results.rawWpm.toFixed(1)}</p>
-							<p>Correct chars: {results.correct}</p>
-							<p>Incorrect chars: {results.incorrect}</p>
-						</div>
-					)}
-				</Modal>
-			)}
-			{mode === TypingMode.MULTIPLAYER && (
-				<Modal
-					open={results != null && position != null}
-					onCancel={handleReset}
-					footer={[
-						<Button key='close' onClick={handleReset}>
-							Close
-						</Button>,
-					]}
-					title='Your Results'
-				>
-					{results && (
-						<div>
-							<p>Accuracy: {results.accuracy.toFixed(1)}%</p>
-							<p>WPM: {results.wpm.toFixed(1)}</p>
-							<p>Raw WPM: {results.rawWpm.toFixed(1)}</p>
-							<p>Correct chars: {results.correct}</p>
-							<p>Incorrect chars: {results.incorrect}</p>
-						</div>
-					)}
-					{position !== null && <p>Position: {position + 1}</p>}
-				</Modal>
+				// <Modal
+				// 	open={!!results}
+				// 	onCancel={handleReset}
+				// 	footer={[
+				// 		<Button key='close' onClick={handleReset}>
+				// 			Close
+				// 		</Button>,
+				// 	]}
+				// 	title='Your Results'
+				// >
+				// 	{results && (
+				// 		<div>
+				// 			<p>Accuracy: {results.accuracy.toFixed(1)}%</p>
+				// 			<p>WPM: {results.wpm.toFixed(1)}</p>
+				// 			<p>Raw WPM: {results.rawWpm.toFixed(1)}</p>
+				// 			<p>Correct chars: {results.correct}</p>
+				// 			<p>Incorrect chars: {results.incorrect}</p>
+				// 		</div>
+				// 	)}
+				// </Modal>
+				<ResultsModal
+					isOpen={!!results}
+					results={results}
+					position={position}
+					onClose={handleReset}
+				/>
 			)}
 			{mode === TypingMode.PRACTICE && (
-				<TbReload
-					className='size-8 cursor-pointer mt-[50px] mx-auto text-gray-400'
-					onClick={() => handleReset()}
+				<>
+					<ResultsModal
+						isOpen={!!results}
+						results={results}
+						onClose={handleReset}
+					/>
+					<TbReload
+						className='size-8 cursor-pointer mt-[50px] mx-auto text-gray-400'
+						onClick={handleReset}
+					/>
+				</>
+			)}
+
+			{mode === TypingMode.MULTIPLAYER && (
+				<ResultsModal
+					isOpen={results != null && position != null}
+					results={results}
+					position={position}
+					onClose={handleReset}
 				/>
 			)}
 		</div>
